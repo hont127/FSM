@@ -207,7 +207,7 @@ public class Fsm
         }, immediateUpdate);
     }
 
-    public void Update(bool isFrameStep)
+    public void Tick(bool isFrameStep)
     {
         if (mNestedLock)
             throw new NotSupportedException("Does not support update nested update fsm!");
@@ -258,7 +258,7 @@ public class Fsm
         while (mNestedTransitionQueue.TryDequeue(out var operate))
         {
             mTransitionQuest = operate;
-            Update(false);
+            Tick(false);
         }
     }
 
@@ -270,6 +270,6 @@ public class Fsm
             mTransitionQuest = operate;
 
         if (immediateUpdate)
-            Update(false);
+            Tick(false);
     }
 }
