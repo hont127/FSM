@@ -77,11 +77,10 @@ public class Fsm
         }
     }
 
-    public struct TransitionOperate
+    struct TransitionOperate
     {
         public TransitionInfo transition;
         public object transitionArg;
-
 
         public void Deconstruct(out TransitionInfo transition, out object arg)
         {
@@ -136,24 +135,6 @@ public class Fsm
         mNestedTransitionQueue = new(4);
     }
 
-    public bool HasState(int identifier)
-    {
-        var state = mStateList.Find(m => m.identifier == identifier);
-        return state != null;
-    }
-
-    public bool HasTransition(int identifier, int dstIdentifier)
-    {
-        var state = mStateList.Find(m => m.identifier == identifier);
-        if (state != null)
-        {
-            var transition = state.transitionList.Find(m => m.dstState.identifier == dstIdentifier);
-            return transition != null;
-        }
-
-        return false;
-    }
-
     public bool Start(int identifier)
     {
         var state = mStateList.Find(m => m.identifier == identifier);
@@ -162,37 +143,6 @@ public class Fsm
         mCurrentState = state;
         state.onEnter?.Invoke(-1, null);
         return true;
-    }
-
-    public void AddState(int identifier, StateEnter onEnter = null, StateUpdate onUpdate = null, StateExit onExit = null)
-    {
-        mStateList.Add(new StateInfo()
-        {
-            identifier = identifier,
-            onEnter = onEnter,
-            onUpdate = onUpdate,
-            onExit = onExit
-        });
-    }
-
-    public void AddTransition(int stateIdentifier, int dstStateIdentifier, StateTransition condition)
-    {
-        var state = mStateList.Find(m => m.identifier == stateIdentifier);
-        var dstState = mStateList.Find(m => m.identifier == dstStateIdentifier);
-
-        state.transitionList.Add(new TransitionInfo()
-        {
-            condition = condition,
-            selfState = state,
-            dstState = dstState
-        });
-    }
-
-    public TransitionInfo GetTransition(int stateIdentifier, int dstStateIdentifier)
-    {
-        var stateInfo = mStateList.Find(m => m.identifier == stateIdentifier);
-        if (stateInfo == null) return null;
-        return stateInfo.transitionList.Find(m => m.dstState.identifier == dstStateIdentifier);
     }
 
     public void Transition(int dstStateIdentifier, object arg = null, bool immediateUpdate = true)
@@ -260,6 +210,55 @@ public class Fsm
             mTransitionQuest = operate;
             Tick(false);
         }
+    }
+
+    bool HasState(int identifier)
+    {
+        var state = mStateList.Find(m => m.identifier == identifier);
+        return state != null;
+    }
+
+    bool HasTransition(int identifier, int dstIdentifier)
+    {
+        var state = mStateList.Find(m => m.identifier == identifier);
+        if (state != null)
+        {
+            var transition = state.transitionList.Find(m => m.dstState.identifier == dstIdentifier);
+            return transition != null;
+        }
+
+        return false;
+    }
+
+    void AddState(int identifier, StateEnter onEnter = null, StateUpdate onUpdate = null, StateExit onExit = null)
+    {
+        mStateList.Add(new StateInfo()
+        {
+            identifier = identifier,
+            onEnter = onEnter,
+            onUpdate = onUpdate,
+            onExit = onExit
+        });
+    }
+
+    void AddTransition(int stateIdentifier, int dstStateIdentifier, StateTransition condition)
+    {
+        var state = mStateList.Find(m => m.identifier == stateIdentifier);
+        var dstState = mStateList.Find(m => m.identifier == dstStateIdentifier);
+
+        state.transitionList.Add(new TransitionInfo()
+        {
+            condition = condition,
+            selfState = state,
+            dstState = dstState
+        });
+    }
+
+    TransitionInfo GetTransition(int stateIdentifier, int dstStateIdentifier)
+    {
+        var stateInfo = mStateList.Find(m => m.identifier == stateIdentifier);
+        if (stateInfo == null) return null;
+        return stateInfo.transitionList.Find(m => m.dstState.identifier == dstStateIdentifier);
     }
 
     void TransitionInternal(TransitionOperate operate, bool immediateUpdate)
