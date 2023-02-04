@@ -7,7 +7,6 @@ public class Fsm
     public delegate void StateEnter(int lastState, object arg);
     public delegate void StateUpdate();
     public delegate void StateExit(int newState);
-    public delegate void StateTimerEnd();
     public delegate bool StateTransition(object arg);
 
     public class StateInfo
@@ -78,7 +77,7 @@ public class Fsm
         }
     }
 
-    public struct FastFsmTransitionOperate
+    public struct TransitionOperate
     {
         public TransitionInfo transition;
         public object transitionArg;
@@ -93,8 +92,8 @@ public class Fsm
 
     bool mNestedLock;
 
-    Queue<FastFsmTransitionOperate> mNestedTransitionQueue;
-    FastFsmTransitionOperate? mTransitionQuest;
+    Queue<TransitionOperate> mNestedTransitionQueue;
+    TransitionOperate? mTransitionQuest;
 
     List<StateInfo> mStateList;
 
@@ -201,7 +200,7 @@ public class Fsm
         var dstTransition = mCurrentState.transitionList
             .Find(m => m.dstState.identifier == dstStateIdentifier);
 
-        TransitionInternal(new FastFsmTransitionOperate()
+        TransitionInternal(new TransitionOperate()
         {
             transition = dstTransition,
             transitionArg = arg
@@ -211,7 +210,7 @@ public class Fsm
     public void Update(bool isFrameStep)
     {
         if (mNestedLock)
-            throw new System.NotSupportedException("Does not support update nested update fsm!");
+            throw new NotSupportedException("Does not support update nested update fsm!");
 
         mNestedLock = true;
 
@@ -240,7 +239,7 @@ public class Fsm
 
                 if (transition.isAutoDetect)
                 {
-                    TransitionInternal(new FastFsmTransitionOperate()
+                    TransitionInternal(new TransitionOperate()
                     {
                         transition = transition,
                         transitionArg = null
@@ -256,14 +255,14 @@ public class Fsm
 
         mNestedLock = false;
 
-        while (mNestedTransitionQueue.TryDequeue(out FastFsmTransitionOperate operate))
+        while (mNestedTransitionQueue.TryDequeue(out var operate))
         {
             mTransitionQuest = operate;
             Update(false);
         }
     }
 
-    void TransitionInternal(FastFsmTransitionOperate operate, bool immediateUpdate)
+    void TransitionInternal(TransitionOperate operate, bool immediateUpdate)
     {
         if (mNestedLock)
             mNestedTransitionQueue.Enqueue(operate);
